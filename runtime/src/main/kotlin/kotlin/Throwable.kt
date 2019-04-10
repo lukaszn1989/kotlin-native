@@ -33,22 +33,25 @@ public open class Throwable(open val message: String?, open val cause: Throwable
 
     public fun getStackTrace(): Array<String> = stackTraceStrings
 
-    public fun printStackTrace() {
-        println(this.toString())
+    internal fun dumpStackTrace(): String = buildString {
+        dumpStackTraceTo(this)
+    }
+
+    private fun dumpStackTraceTo(buffer: StringBuilder): Unit = with(buffer) {
+        appendln(this@Throwable.toString())
 
         for (element in stackTraceStrings) {
-            println("        at $element")
+            appendln("        at $element")
         }
 
-        this.cause?.printEnclosedStackTrace(this)
+        cause?.let {
+            // TODO: should skip common stack frames
+            append("Caused by: ")
+            it.dumpStackTraceTo(buffer)
+        }
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    private fun printEnclosedStackTrace(enclosing: Throwable) {
-        // TODO: should skip common stack frames
-        print("Caused by: ")
-        this.printStackTrace()
-    }
+    public fun printStackTrace(): Unit = print(dumpStackTrace())
 
     override public fun toString(): String {
         val kClass = this::class
